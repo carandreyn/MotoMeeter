@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using MotoMeeter.Data;
 using MotoMeeter.Helpers;
 using MotoMeeter.Interfaces;
 using MotoMeeter.Models;
@@ -15,11 +17,18 @@ namespace MotoMeeter.Controllers
     {
         private readonly ILogger<HomeController> _logger;
         private readonly IClubRepository _clubRepository;
+        private readonly UserManager<AppUser> _userManager;
+        private readonly SignInManager<AppUser> _signInManager;
+        private readonly ILocationService _locationService;
 
-        public HomeController(ILogger<HomeController> logger, IClubRepository clubRepository)
+        public HomeController(ILogger<HomeController> logger, IClubRepository clubRepository,
+            UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, ILocationService locationService)
         {
             _logger = logger;
             _clubRepository = clubRepository;
+            _userManager = userManager;
+            _signInManager = signInManager;
+            _locationService = locationService;
         }
 
         public async Task<IActionResult> Index()
@@ -39,17 +48,50 @@ namespace MotoMeeter.Controllers
                 {
                     homeViewModel.Clubs = await _clubRepository.GetClubByCity(homeViewModel.City);
                 }
-                else
-                {
-                    homeViewModel.Clubs = null;
-                }
                 return View(homeViewModel);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 homeViewModel.Clubs = null;
             }
+
             return View(homeViewModel);
+        }
+
+        public IActionResult Register()
+        {
+            var response = new HomeUserCreateViewModel();
+            return View(response);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Index(HomeViewModel homeVM)
+        {
+            var createVM = homeVM.Register;
+
+            if (!ModelState.IsValid) return View(homeVM);
+
+            var user = await _userManager.FindByEmailAsync(createVM.Email);
+            if (user != null)
+            {
+                ModelState.AddModelError("Register.Email", "This email address is already in use");
+                return View(homeVM);
+            }
+
+            var newUser = new AppUser
+            {
+                UserName = createVM.UserName,
+                Email = createVM.Email,
+            };
+
+            var newUserResponse = await _userManager.CreateAsync(newUser, createVM.Password);
+
+            if (newUserResponse.Succeeded)
+            {
+                await _signInManager.SignInAsync(newUser, isPersistent: false);
+                await _userManager.AddToRoleAsync(newUser, UserRoles.User);
+            }
+            return RedirectToAction("Index", "Club");
         }
 
         public IActionResult Privacy()

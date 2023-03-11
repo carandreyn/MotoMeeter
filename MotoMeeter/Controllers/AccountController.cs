@@ -1,8 +1,12 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using MotoMeeter.Data;
+using MotoMeeter.Interfaces;
 using MotoMeeter.Models;
 using MotoMeeter.ViewModels;
+using System.Security.Claims;
 
 namespace MotoMeeter.Controllers
 {
@@ -11,13 +15,20 @@ namespace MotoMeeter.Controllers
         private readonly UserManager<AppUser> _userManager;
         private readonly SignInManager<AppUser> _signInManager;
         private readonly ApplicationDbContext _context;
-        public AccountController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, ApplicationDbContext context)
+        private readonly ILocationService _locationService;
+
+        public AccountController(UserManager<AppUser> userManager,
+            SignInManager<AppUser> signInManager,
+            ApplicationDbContext context,
+            ILocationService locationService)
         {
             _context = context;
+            _locationService = locationService;
             _signInManager = signInManager;
             _userManager = userManager;
         }
 
+        [HttpGet]
         public IActionResult Login()
         {
             var response = new LoginViewModel();
@@ -53,6 +64,7 @@ namespace MotoMeeter.Controllers
             return View(loginViewModel);
         }
 
+        [HttpGet]
         public IActionResult Register()
         {
             var response = new RegisterViewModel();
@@ -84,13 +96,34 @@ namespace MotoMeeter.Controllers
             return RedirectToAction("Index", "Meetup");
         }
 
-        [HttpPost]
+        [HttpGet]
         public async Task<IActionResult> Logout()
         {
             await _signInManager.SignOutAsync();
             return RedirectToAction("Index", "Meetup");
         }
 
+        [HttpGet]
+        [Route("Account/Welcome")]
+        public async Task<IActionResult> Welcome(int page = 0)
+        {
+            if (page == 0)
+            {
+                return View();
+            }
+            return View();
 
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetLocation(string location)
+        {
+            if (location == null)
+            {
+                return Json("Not found");
+            }
+            var locationResult = await _locationService.GetLocationSearch(location);
+            return Json(locationResult);
+        }
     }
 }
