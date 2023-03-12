@@ -365,3 +365,4 @@ FodyWeavers.xsd
 /MotoMeeter/Program.cs
 /MotoMeeter/Properties/ServiceDependencies/MotoMeeter20230311153338 - Zip Deploy
 /MotoMeeter/Properties/ServiceDependencies/MotoMeeter20230311153338 - Zip Deploy
+/MotoMeeter/Data/Seed.cs

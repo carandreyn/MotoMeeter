@@ -12,7 +12,7 @@ using MotoMeeter.Data;
 namespace MotoMeeter.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20230311204007_InitialCreate")]
+    [Migration("20230312033710_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
